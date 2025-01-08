@@ -1,4 +1,4 @@
-# Fondo Monetario Común: Trabajo Práctico N°1
+# Trabajo Práctico 1: Fondo Monetario Común
 
 Este repositorio contiene el desarrollo del Trabajo Práctico N°1 de la materia "Algoritmos y Estructuras de Datos" de la Universidad de Buenos Aires.
 
