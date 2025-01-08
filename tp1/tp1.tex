@@ -1,0 +1,583 @@
+\documentclass[10pt,a4paper]{article}
+
+\input{AEDmacros}
+\usepackage{caratula} 
+\usepackage{amssymb}
+
+
+\titulo{Trabajo Práctico 1: Especificación y WP}
+\subtitulo{Fondo Monetario Común}
+
+\fecha{\today}
+
+\materia{Algoritmos y Estructuras de Datos}
+
+
+\integrante{Roda Baez, Santiago Ariel}{1021/23}{santiroda04@gmail.com}
+\integrante{Sigal Aguirre, Mario}{157/22}{mariosigalaguirre@gmail.com}
+\integrante{Astudillo, Marcos Ariel}{841/22}{astudillomarcos15@gmail.com}
+\integrante{Moreira Siri, Juan Manuel}{592/20}{drakenn96@gmail.com}
+
+
+
+\graphicspath{{../static/}}
+
+\begin{document}
+
+\maketitle
+
+\section{Predicados y funciones auxiliares usados en más de un ejercicio}
+
+\pred{todosPositivos}{\In s :\TLista{\float}}{\paraTodo[unalinea]{i}{\ent}{0\leq i < \longitud{s}\implicaLuego s[i]>0}}
+
+\pred{todasPositivas}{s : \TLista{\TLista{\float}}}{\paraTodo[unalinea]{l}{\TLista{\float}}{l \in s \implicaLuego \paraTodo[unalinea]{i}{\ent}{0 \leq i < \longitud{l} \implicaLuego l[i] > 0}}}
+
+\pred{todasSumanUno}{s : \TLista{\TLista{\float}}}{\paraTodo[unalinea]{l}{\TLista{\float}}{l \in s \implicaLuego \sum\limits_{i=0}\limits^{\longitud{l} - 1} l[i] = 1}}
+
+\pred{todasMismaLongitud}{s : \TLista{\TLista{\float}}}{\paraTodo[unalinea]{i,j}{\ent}{0 \leq i,j < \longitud{s} \implicaLuego \longitud{s[i]} = \longitud{s[j]}}}
+\vspace{4pt}
+
+\pred{todasPositivasOCero}{s : \TLista{\TLista{\float}}}{\paraTodo[unalinea]{l}{\TLista{\float}}{l \in s \implicaLuego \paraTodo[unalinea]{i}{\ent}{0 \leq i < \longitud{l} \implicaLuego l[i] \geq 0}}}
+
+\pred{contienenListasDeIgualLongitud}{s, l : \TLista{\TLista{\float}}}{\paraTodo[unalinea]{i,j}{\ent}{0 \leq i,j < \longitud{s} \implicaLuego \longitud{s[i]} = \longitud{l[j]}}}
+\vspace{4pt}
+
+\pred{todasNoVacias}{s : \TLista{\TLista{T}}}{\paraTodo[unalinea]{i}{\ent}{0 \leq i < \longitud{s} \implicaLuego \longitud{s[i]} > 0}}
+\vspace{4pt}
+
+\pred{eventosCorrectos}{s : \TLista{\TLista{\nat}}, a : \TLista{\TLista{\float}}}{\paraTodo[unalinea]{l}{\TLista{\nat}}{l \in s \implicaLuego \paraTodo[unalinea]{i}{\nat}{i \in l \implicaLuego 0 \leq i < \longitud{a[0]}}}}
+
+\pred{trayectoriasDeLongitudAdecuada}{trayectorias : \TLista{\TLista{\float}}, eventos : \TLista{\TLista{\nat}}}{\paraTodo[unalinea]{l}{\TLista{\float}}{l \in trayectorias \implicaLuego \longitud{l} = \longitud{eventos[0]} + 1}{}}
+\vspace{8pt}
+
+\aux{parteDelFondo}{j : \ent, trayectorias, apuestas, pagos : \TLista{\TLista{\float}}, eventos : \TLista{\TLista{\nat}}, cooperan : \TLista{\bool}}{\float}{\frac{\sum\limits_{i=0}\limits^{\longitud{cooperan} - 1} \IfThenElse{cooperan[i]}{recursosTrasApostar(i, j, trayectorias, apuestas, pagos, eventos)}{0}}{\longitud{cooperan}}}
+\vspace{8pt}
+
+\aux{recursosTrasApostar}{i, j : \ent, trayectorias, apuestas, pagos : \TLista{\TLista{\float}}, eventos : \TLista{\TLista{\nat}}}{\float}{ \newline trayectorias[i][j] * apuestas[i][eventos[i][j]] * pagos[i][eventos[i][j]]}
+
+\vspace{\baselineskip}
+
+\pred{trayectoriasCorrectas}{ trayectorias : \TLista{\TLista{\float}}, recursos : \TLista{\float}, cooperan : \TLista{\bool},apuestas : \TLista{\TLista{\float}}, pagos : \TLista{\TLista{\float}}, eventos : \TLista{\TLista{\nat}}}{
+ \longitud{trayectorias} = \longitud{pagos} \,\, \land 
+ \newline trayectoriasDeLongitudAdecuada(trayectorias, eventos) \,\, \land \,\, recursosInicialesAdecuados(trayectorias, recursos)
+ \newline \land \,\, pasosCorrectos(trayectorias,  apuestas, pagos, cooperan, eventos) }
+
+ \pred{recursosInicialesAdecuados}{trayectorias : \TLista{\TLista{\float}}, recursos : \TLista{\float}}{ \paraTodo[unalinea]{i}{\ent}{0 \leq i < \longitud{trayectorias} \,\, \implicaLuego \,\, trayectorias[i][0] = recursos[i]}}
+\vspace{4pt}
+
+\pred{pasosCorrectos}{trayectorias, apuestas, pagos : \TLista{\TLista{\float}}, cooperan : \TLista{\bool}, eventos : \TLista{\TLista{\nat}}}{
+    \paraTodo[unalinea]{i}{\ent}{ 0 \leq i  < \longitud{trayectorias} \yLuego cooperan[i] = true \implicaLuego \paraTodo[unalinea]{j}{\ent}{ 1 \leq j < \longitud{trayectorias[i]} \implicaLuego trayectorias[i][j] = parteDelFondo(j-1, trayectorias, apuestas, pagos, eventos, cooperan)}} \,\, \land 
+    \newline \paraTodo[unalinea]{i}{\ent}{ 0 \leq i  < \longitud{trayectorias} \yLuego \neg cooperan[i] = true \implicaLuego \paraTodo[unalinea]{j}{\ent}{ 1 \leq j < \longitud{trayectorias[i]} \implicaLuego trayectorias[i][j] = parteDelFondo(j-1, trayectorias, apuestas, pagos, eventos, cooperan) \,\, + 
+    \newline recursosTrasApostar(i, j-1, trayectorias, apuestas, pagos, eventos)}\,} }
+
+\aux{ultimoRecurso}{trayectorias : \TLista{\TLista{\float}}, individuo : \nat}{\float}{
+    \newline trayectorias[individuo][\longitud{trayectorias[individuo]} - 1]
+}
+
+\newpage
+
+\section{Especificación}
+
+\begin{enumerate}
+    \item \textbf{redistribucionDeLosFrutos}: Calcula los recursos que obtiene cada uno de los individuos luego de que se redistribuyen los recursos del fondo monetario común en partes iguales. El fondo monetario común se compone de la suma de \textit{recursos} iniciales aportados por todas las personas que \textit{cooperan.} La salida es la lista de recursos que tendrá cada jugador.
+
+\vspace{16pt}
+
+\begin{proc}{redistribucionDeLosFrutos}{\In recursos : \TLista{\float}, \In cooperan : \TLista{\bool}}{\TLista{\float}}{
+	
+        \requiere{todosPositivos(recursos) \,\, \land \,\, \longitud{recursos}=\longitud{cooperan}}
+        \asegura{\longitud{res}=\longitud{recursos} \,\, \yLuego \\
+        \phantom{mmmmm}\paraTodo[unalinea]{i}{\ent}{0\leq i < \longitud{res} \land cooperan[i] = true \implicaLuego res[i] = parteDelFondoInicio(recursos,cooperan)} \land 
+        \phantom{mmmmm}\paraTodo[unalinea]{i}{\ent}{0\leq i < \longitud{res} \land \lnot cooperan[i] = true \implicaLuego res[i] = recursos[i] + \newline parteDelFondoInicio(recursos,cooperan)}}
+        
+        }
+\end{proc}
+\vspace{8pt}
+
+\aux{parteDelFondoInicio}{recursos : \TLista{\float}, cooperan : \TLista{\bool}}{\float}{\frac{\sum\limits_{i=0}\limits^{\longitud{recursos}-1}\IfThenElse{cooperan[i]}{recursos[i]}{0}}{\longitud{recursos}}}
+
+\vspace{32pt}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\item \textbf{trayectoriaDeLosFrutosIndividualesALargoPlazo}: Actualiza (In/Out) la lista de \textit{trayectorias} de los los recursos de cada uno de los individuos. Inicialmente, cada una de las trayectorias (listas de recursos) contiene un único elemento que representa los recursos iniciales del individuo. El procedimiento agrega a las \textit{trayectorias} los recursos que los individuos van obteniendo a medida que se van produciendo los resultados de los \textit{eventos} en función de la lista de \textit{pagos} que le ofrece la naturaleza (o casa de apuestas) a cada uno de los individuos, las \textit{apuestas} (o inversiones) que realizan los individuos en cada paso temporal, y la lista de individuos que \textit{cooperan} aportando al fondo monetario común.
+
+\vspace{16pt}
+
+\begin{proc}{trayectoriaDeLosFrutosIndividualesALargoPlazo}{\Inout trayectorias : \TLista{\TLista{\float}}, \In cooperan : \TLista{\bool}, \In apuestas : \TLista{\TLista{\float}}, \In pagos : \TLista{\TLista{\float}}, In eventos : \TLista{\TLista{\nat}} }{}{}
+    \requiere{trayectorias = A_{0} \,\, \land \,\, todasLongitudUno(A_{0}) \,\, \land \,\, todasPositivas(A_{0}) \,\, \land \,\,
+    \newline (\longitud{A_{0}}  = \longitud{cooperan} = \longitud{apuestas} = \longitud{pagos} = \longitud{eventos}) \,\, \land \,\, todasSumanUno(apuestas) \,\, \land
+    \newline todasMismaLongitud(apuestas)  \,\, \land \,\, todasMismaLongitud(pagos) \,\, \land \,\, todasMismaLongitud(eventos) \,\, \land \newline todasPositivas(pagos) \,\, \land \,\, todasPositivasOCero(apuestas) \,\, \land \newline contienenListasDeIgualLongitud(apuestas,pagos) \,\, \land \,\, todasNoVacias(apuestas) \,\, \land \,\, todasNoVacias(pagos) \,\, \land \newline todasNoVacias(eventos) \,\, \land \,\, eventosCorrectos(eventos, apuestas)} 
+
+    \vspace{\baselineskip}
+    
+    \asegura{ igualesRecursosIniciales(trayectorias,A_{0}) \,\, \land \,\, \longitud{trayectorias} = \longitud{A_{0}} \,\, \land \newline trayectoriasDeLongitudAdecuada(trayectorias, eventos) \,\, \land
+    \newline \paraTodo[unalinea]{i}{\ent}{0 \leq i < \longitud{trayectorias} \yLuego cooperan[i] = true \implicaLuego \paraTodo[unalinea]{j}{\ent}{1 \leq j < \longitud{trayectorias[i]} \implicaLuego trayectorias[i][j] = parteDelFondo(j-1,trayectorias,apuestas,pagos,eventos,cooperan)\,}} \,\, \land 
+    \newline \paraTodo[unalinea]{i}{\ent}{0 \leq i < \longitud{trayectorias} \yLuego \neg cooperan[i] = true \implicaLuego \paraTodo[unalinea]{j}{\ent}{1 \leq j < \longitud{trayectorias[i]} \implicaLuego trayectorias[i][j] = recursosTrasApostar(i, j-1, trayectorias, apuestas, pagos, eventos) \,\, + 
+    \newline parteDelFondo(j-1, trayectorias, apuestas, pagos, eventos, cooperan)\,}}}
+    
+\end{proc}
+\vspace{8pt}
+
+\pred{todasLongitudUno}{s : \TLista{\TLista{\float}}}{\paraTodo[unalinea]{i}{\ent}{ 0 \leq i < \longitud{s} \implicaLuego \longitud{s[i]} = 1}}
+\vspace{4pt}
+
+
+\pred{igualesRecursosIniciales}{s, l : \TLista{\TLista{\float}}}{\paraTodo[unalinea]{i}{\ent}{0 \leq i < \longitud{s} \implicaLuego s[i][0] = l[i][0]}{}}
+\vspace{4pt}
+
+
+\vspace{32pt}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\item \textbf{trayectoriaExtrañaEscalera}: Esta función devuelve \textit{True} sii en la trayectoria de un individuo existe un único punto mayor a sus vecinos (llamado máximo local). Un elemento es máximo local si es mayor estricto que sus vecinos inmediatos. (Aclaramos que tomamos como posibles máximos locales a los extremos y que una lista con un único elemento tiene un máximo local)
+
+\vspace{16pt}
+
+\begin{proc}{trayectoriaExtrañaEscalera}{\In trayectoria : \TLista{\float}}{\bool}{
+    \requiere{True}
+    \asegura{ res = True \,\, \iff \,\, \longitud{trayectoria} = 1  \,\, \vee \,\, existeUnicoMaximoLocalIntermedio(trayectoria) \,\, \vee 
+    \newline elMaximoLocalEsElPrimero(trayectoria) \,\, \vee \,\, elMaximoLocalEsElUltimo(trayectoria)}
+}
+\end{proc}
+\vspace{8pt}
+
+\pred{existeUnicoMaximoLocalIntermedio}{trayectoria : \TLista{\float}}{\existe[unalinea]{i}{\ent}{0 < i < \longitud{trayectoria} - 1 \yLuego trayectoria[i] > trayectoria[i+1] \land trayectoria[i] > trayectoria[i-1] \land \neg (trayectoria[0] > trayectoria[1]) \land \neg (trayectoria[\longitud{trayectoria} - 1] > trayectoria[\longitud{trayectoria} - 2]) \land \newline \neg \existe[unalinea]{j}{\ent}{ 0 < j < \longitud{trayectoria} - 1 \yLuego i \neq j \land trayectoria[j] > trayectoria[j+1] \land trayectoria[j] > trayectoria[j-1]}}}
+\vspace{4pt}
+
+\pred{elMaximoLocalEsElPrimero}{trayectoria : \TLista{\float}}{ \longitud{trayectoria} > 1 \yLuego trayectoria[0] > trayectoria[1] \land \neg (trayectoria[\longitud{trayectoria} - 1] > trayectoria[\longitud{trayectoria} - 2]) \land \newline \neg \existe[unalinea]{i}{\ent}{0 < i < \longitud{trayectoria} - 1 \yLuego trayectoria[i] > trayectoria[i+1] \land trayectoria[i] > trayectoria[i-1]}}
+
+\pred{elMaximoLocalEsElUltimo}{trayectoria : \TLista{\float}}{\longitud{trayectoria} > 1  \yLuego \ (trayectoria[\longitud{trayectoria} - 1] > trayectoria[\longitud{trayectoria} - 2]) \ \land \ \newline \neg (trayectoria[0] > trayectoria[1]) \  \land \ \neg \existe[unalinea]{i}{\ent}{0 < i < \longitud{trayectoria} - 1 \yLuego trayectoria[i] > trayectoria[i+1] \land trayectoria[i] > trayectoria[i-1]}  }
+
+\vspace{20pt}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\item \textbf{individuoDecideSiCooperarONo}: Un \textit{individuo} actualiza su comportamiento cooperativo / no-cooperativo (\textit{cooperan}[\textit{individuo}]) en función de los \textit{recursos} iniciales, de quienes \textit{cooperan}, de los \textit{pagos} que se le ofrecen a cada individuo, de las inversiones o \textit{apuestas} de cada individuo, y del resultado los \textit{eventos} que recibe cada individuo, eligiendo el comportamiento que maximiza sus recursos individuales a largo plazo.
+
+\vspace{16pt}
+
+\begin{proc}{individuoDecideSiCooperarONo}{\In individuo: \nat, \In recursos: \TLista{\float}, \Inout cooperan: \TLista{\bool}, \In apuestas: \matriz{\float}, \In pagos: \matriz{\float}, \In eventos: \matriz{\nat}}{}
+	   
+        \requiere{cooperan = C_0 \,\, \land \,\, 0 \leq individuo < \longitud{recursos}   \,\, \land \,\, todosPositivos(recursos) \,\, \land
+        \newline (\longitud{recursos} = \longitud{cooperan} = \longitud{apuestas} = \longitud{pagos} = \longitud{eventos}) \,\, \land \,\, todasSumanUno(apuestas) \,\, \land 
+        \newline todasMismaLongitud(apuestas)  \,\, \land \,\, todasMismaLongitud(pagos) \,\, \land \,\, todasMismaLongitud(eventos) \,\, \land 
+        \newline todasPositivas(pagos) \,\, \land \,\, todasPositivasOCero(apuestas) \,\, \land 
+        \newline contienenListasDeIgualLongitud(apuestas, pagos) \,\, \land \,\, todasNoVacias(apuestas) \,\, \land \,\, todasNoVacias(pagos) \,\, \land 
+        \newline todasNoVacias(eventos) \,\, \land \,\, eventosCorrectos(eventos, apuestas)}
+
+        \vspace{\baselineskip}
+
+        \asegura{cooperan = setAt(C_{0}, individuo, true) \,\, \iff
+        \newline \existe[]{trayectoriasCooperando, trayectoriasSinCooperar}{\TLista{\TLista{\float}}}{trayectoriasCorrectas(trayectoriasCooperando, recursos, setAt(C_0, individuo, true), apuestas, pagos, eventos) \,\, \land
+        \newline trayectoriasCorrectas(trayectoriasSinCooperar, recursos, setAt(C_0, individuo, false), apuestas, pagos, eventos) \,\, \land
+        \newline ultimoRecurso(trayectoriasCooperando, individuo) \,\, > \,\, ultimoRecurso(trayectoriasSinCooperar, individuo)} \,\, \land
+        \newline cooperan = setAt(C_{0}, individuo, false) \,\, \iff
+        \newline \existe[]{trayectoriasCooperando, trayectoriasSinCooperar}{\TLista{\TLista{\float}}}{trayectoriasCorrectas(trayectoriasCooperando, recursos, setAt(C_0, individuo, true), apuestas, pagos, eventos) \,\, \land
+        \newline trayectoriasCorrectas(trayectoriasSinCooperar, recursos, setAt(C_0, individo, false), apuestas, pagos, eventos) \,\, \land
+        \newline ultimoRecurso(trayectoriasCooperando, individuo) \,\, \leq \,\, ultimoRecurso(trayectoriasSinCooperar, individuo)} }
+        
+\end{proc}
+\vspace{8pt}
+
+\vspace{32pt}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\item \textbf{individuoActualizaApuesta}:  Un \textit{individuo} actualiza su apuesta (\textit{apuestas}[\textit{individuo}]) en función de los \textit{recursos} iniciales, de la lista de individuos que \textit{cooperan}, de los \textit{pagos} que se le ofrecen a cada individuo, de las inversiones o \textit{apuestas} de cada individuo y del resultado los \textit{eventos} que recibe cada individuo, eligiendo la apuesta que maximiza sus recursos individuales a largo plazo.
+
+\vspace{16pt}
+
+\begin{proc}{individuoActualizaApuesta}{\In individuo : \nat, \In recursos : \TLista{\float}, \In cooperan : \TLista{\bool}, \Inout apuestas : \TLista{\TLista{\float}}, \In pagos : \TLista{\TLista{\float}}, \In eventos : \TLista{\TLista{\nat}}}{}{
+    \requiere{apuestas = A_0 \,\, \land \,\, 0\leq individuo < \longitud{recursos} \,\, \land 
+    \newline (\longitud{recursos} = \longitud{cooperan} = \longitud{apuestas} = \longitud{pagos} = \longitud{eventos}) \,\, \land \,\, todosPositivos(recursos) \,\, \land 
+    \newline todasSumanUno(apuestas) \,\, \land \,\, todasMismaLongitud(apuestas)  \,\, \land \,\, todasMismaLongitud(pagos) \,\, \land 
+    \newline todasMismaLongitud(eventos) \,\, \land \,\, todasPositivas(pagos) \,\, \land \,\, todasPositivasOCero(apuestas) \,\, \land 
+    \newline contienenListasDeIgualLongitud(apuestas, pagos) \,\, \land \,\, todasNoVacias(apuestas) \,\, \land \,\, todasNoVacias(pagos) \,\, \land 
+    \newline todasNoVacias(eventos) \,\, \land \,\, eventosCorrectos(eventos, apuestas)}
+
+    \vspace{\baselineskip}
+    
+    \asegura{ \longitud{apuestas} = \longitud{A_0} \,\, \yLuego \,\, soloCambiaElIndividuo(individuo, apuestas, A_0) \,\, \land 
+    \newline todasMismaLongitud(apuestas) \,\, \land \,\, todosPositivosOCero(apuestas[individuo]) \,\, \land \,\, sumanUno(apuestas[individuo]) \,\, \newline \land 
+    \newline \existe[]{mejorTrayectorias}{\TLista{\TLista{\float}}}{trayectoriasCorrectas(mejorTrayectorias, recursos, cooperan, setAt(A_0,individuo,apuestas[individuo]), pagos,  \newline eventos) \,\, \land \,\, \paraTodo[unalinea]{apuesta}{\TLista{\float}}{\longitud{apuesta} = \longitud{apuestas[individuo]} \land sumanUno(apuesta) \newline \land todosPositivosOCero(apuesta) \implicaLuego \newline \existe[]{trayectoriasApuesta}{\TLista{\TLista{\float}}}{trayectoriasCorrectas(trayectoriasApuesta, recursos, cooperan, setAt(A_0, individuo, apuesta),pagos,eventos) \,\, \land 
+    \newline ultimoRecurso(mejorTrayectorias, individuo) \geq  ultimoRecurso(trayectoriaApuesta, individuo) }}}
+    }
+}
+\end{proc}
+\vspace{8pt}
+
+\pred{soloCambiaElIndividuo}{individuo : \nat, apuestasModificadas : \TLista{\TLista{\float}}, apuestasOriginales : \TLista{\TLista{\float}}}{ \paraTodo[unalinea]{i}{\ent}{0 \leq i < \longitud{apuestasModificadas} \,\, \land \,\, i \neq individuo \,\, \implicaLuego \,\, apuestasModificadas[i] = apuestasOriginales[i]}}
+\vspace{4pt}
+
+\pred{sumanUno}{apuesta : \TLista{\float}}{\sum\limits_{i=0}\limits^{\longitud{apuesta} - 1} apuesta[i] = 1}
+
+
+\pred{todosPositivosOCero}{s : \TLista{\float}}{
+ \paraTodo[unalinea]{i}{\ent}{0 \leq i < \longitud{s} \implicaLuego s[i] \geq 0}
+}
+
+
+%\asegura{\longitud{cooperan}=\longitud{C_0} \land \newline cooperan[individuo]= ConvieneCooperar(individuo,\ recursos,\ C_0,\ apuestas,\ pagos,\ eventos)}\}
+
+
+%\pred{ConvieneCooperar}{individuo: \nat,recursos: \TLista{\float}, cooperan: \TLista{\bool}, apuestas: \matriz{\float}, pagos: \matriz{\float},  eventos:\matriz{\nat}}{recursosIndividualesALargoPlazo(individuo,\ recursos,\ setAt(cooperan,\ individuo,\True),\ apuestas,\ pagos,\ eventos) > recursosIndividualesALargoPlazo(individuo,\ recursos,\ setAt(cooperan,\ individuo,\False),\ apuestas,\ pagos,\ eventos) }
+
+
+%\aux{recursosIndividualesALargoPlazo}{individuo: \nat,recursos: \TLista{\float}, cooperan: \TLista{\bool}, apuestas: \matriz{\float}, pagos: \matriz{\float},  eventos:\matriz{\nat}}{\float}{\\ recursos[individuo]. \prod\limits_{j=0}\limits^{\longitud{eventos[individuo]}-1}(apuestas[individuo][evento[individuo][i]]\ .\ pagos[individuo][eventos[individuo][i]]\ .\\ coeficienteDeRedistribuciónDelFondo(individuo,recursos,cooperan,apuestas,pagos,eventos))}
+
+
+%\aux{coeficienteDeRedistribuciónDelFondo}{individuo: \nat,recursos: \TLista{\float}, cooperan: \TLista{\bool}, apuestas: \matriz{\float}, pagos: \matriz{\float},  eventos:\matriz{\nat}}{\float}{\\ \IfThenElse{cooperan[individuo]}{\frac{parteDelFondo()}{apuestas[individuo][evento[individuo][i]]\ .\ pagos[individuo][eventos[individuo][i]]}} {\\ \frac{apuestas[individuo][evento[individuo][i]]\ .\ pagos[individuo][eventos[individuo][i]]+parteDelFondo()}{apuestas[individuo][evento[individuo][i]]\ .\ pagos[individuo][eventos[individuo][i]]}}}
+
+
+%\aux{actualizacionDeRecursos}{individuo: \nat,recursos: \TLista{\float}, cooperan: \TLista{\bool}, apuestas: \matriz{\float}, pagos: \matriz{\float},  eventos:\matriz{\nat}}{\TLista{\float}}{\paraTodo[unalinea]{i}{\ent}{0\leq i < \longitud{R_0} \implicaLuego recursos = setAt(recursos,i,recursos[i].apuestas[i][evento[i][?]]\ .\ pagos[i][eventos[i][?]]}}
+
+
+\end{enumerate}
+
+
+
+\section{Demostracion de correctitud}
+\subsection{Introducción:}
+
+\begin{lstlisting}[caption=demostraremos la correctitud de este codigo respecto de la siguiente especificacion,label=code:1]
+res = recursos
+ i = 0
+ while ( i < |eventos |) do
+    if eventos [ i ] then
+        res = (res * apuesta.c) * pago.c
+    else
+        res = (res * apuesta.s) * pago.s
+    endif
+    i = i + 1
+ endwhile
+\end{lstlisting}
+\begin{proc}{frutoDelTrabajoPuramenteIndividual}{\In recursos: \float, \In apuestas ⟨\ s\ :\ \float,\ c\ :\ \float⟩, \In pago:⟨\ s\ :\ \float,\ c\ :\ \float⟩, \In eventos: \TLista{\bool},\Out res:\float}{}
+    \requiere{apuesta_c + apuestas_s = 1 \land pago_c > 0\land pago_s>0 \land  apuesta_c > 0\land apuesta_s>0 \land recurso> 0}
+    \asegura{res = recursos(apuestas_c, pago_c)^{\# apariciones(eventos, T)}(apuestas_s, pago_s)^{\# apariciones(eventos, F)}}
+\end{proc}
+\subsection{Resolución:}
+Supodremos:\\
+
+$ P \equiv requiere; Q \equiv asegura$ \\
+
+Queremos demostrar la siguiente tripla de Hoare:\\
+\begin{equation}
+	\{P\} Código\ \ref{code:1} \{Q\}\\
+	\label{eq:1}
+\end{equation}
+    
+Queremos ver que:
+\begin{equation}
+	P \xrightarrow{} wp(Código\ \ref{code:1}, Q)
+    \label{eq:2}
+\end{equation}
+
+Vemos que $Código\ \ref{code:1}$ se encuentra subdividido en sub-instrucciones de codigo $s1;s2;s3$. Siendo:
+\begin{itemize}
+    \item s1: \begin{lstlisting}[] 
+     res = recursos
+    \end{lstlisting}
+    \item s2: \begin{lstlisting}[] 
+     i = 0
+    \end{lstlisting}
+
+    \item s3: \begin{lstlisting}[] 
+     while ( i < |eventos |) do
+        if eventos [ i ] then
+            res = (res * apuesta.c) * pago.c
+        else
+            res = (res * apuesta.s) * pago.s
+        endif
+        i = i + 1
+     endwhile
+    \end{lstlisting}
+\end{itemize}
+
+Por lo tanto ver \eqref{eq:2} es lo mismo que ver:
+
+\begin{equation}
+	P \xrightarrow{} wp(s1;s2;s3,Q)
+    \label{eq:3}
+\end{equation}
+
+A su vez, por el colorario de la monotonia, esto es equivalente a probar que:
+\begin{equation}
+\begin{split}
+    P \xrightarrow{} wp(s1;s2,P_c) \\
+    P_c \xrightarrow{} wp(s3,Q) 
+\end{split}
+\end{equation}
+
+Como s3 es un ciclo, ver $P_c \xrightarrow{} wp(s3,Q)$ es lo mismo que ver la correccion de su tripla de Hoare:
+\begin{equation}
+	\{P_c\} s3 \{Q_c\}\  con: Q_c \equiv Q
+	\label{eq:4}
+\end{equation}
+Para ello, enunciamos y demostramos que vale en este caso el teorema de corrección de un ciclo:
+
+Teorema: Sean un predicado $I$ y una función $fv : \mathds{V} \xrightarrow{} \ent$
+(donde \mathds{V} es el producto cartesiano de los dominios de las
+variables del programa), y supongamos que $I$ \xrightarrow[]{} def(B). Si:\\
+
+\begin{enumerate}
+    \item $P_c \xrightarrow[]{} I$
+    \item$\{I \land B\} S \{I \}$
+    \item $I \land \lnot B \xrightarrow[]{} Q_c$
+    \item$\{I \land B \land v_0 = fv\} S \{fv < v_0\}$
+    \item$I \land fv \leq 0 \xrightarrow[]{} \lnot B$
+\end{enumerate}
+
+Entonces, la siguiente tripla de Hoare es válida:
+\begin{equation}
+	\{P_c \} while\  B\  do\  S\  endwhile \{Q_c\}
+    \label{eq:5}
+\end{equation}
+
+
+
+
+Definimos:
+
+\vspace{4pt}
+%INVARIANTE
+$I \equiv 0 \leq i \leq \longitud{eventos} \yLuego res = recurso*(apuestas_c * pagos_c)^{\#(subseq(eventos, 0, i), T)}*(apuestas_s * pagos_s)^{\#(subseq(eventos, 0, i), F)}$
+
+
+\vspace{8pt}
+$P_c \equiv res = recurso \land i = 0 \land pago_c > 0 \land pago_s > 0 \land apuestas_c > 0 \land apuestas_s > 0 \land recurso > 0$
+
+\vspace{8pt}
+$Q_c \equiv Q \equiv res = recurso*(apuestas_c * pago_c)^{\#(eventos, T)}*(apuestas_s * pago_s)^{\#(eventos, F)}$
+
+\vspace{8pt}
+$B \equiv i < \longitud{eventos}$
+
+\vspace{16pt}
+Probaremos primero 1. $P_c \implica I$ :
+
+\vspace{8pt}
+$i = 0 \implica 0 \leq i \leq \longitud{eventos}$
+
+\vspace{4pt}
+Y tambien:
+
+\vspace{4pt}
+$res = recurso \implica res = recurso*1 \equiv res = recurso*(apuestas_c * pago_c)^0 * (apuestas_s * pago_s)^0$
+\vspace{4pt}
+
+Y como $i = 0$ esta última expresión implica:
+
+\vspace{4pt}
+$res = recurso*(apuestas_c * pago_c)^{\#(subseq(eventos, 0, 0), T)} * (apuestas_s * pago_s)^{\#(subseq(eventos, 0, 0), F)} \equiv \newline res = recurso*(apuestas_c * pago_c)^{\#(subseq(eventos, 0, i), T)} * (apuestas_s * pago_s)^{\#(subseq(eventos, 0, i), F)} \equiv I_\square $
+\vspace{16pt}
+
+Probaremos ahora 3. $I \land \neg B \implica Q_c$
+
+\vspace{8pt}
+$0 \leq i \leq \longitud{eventos} \land \neg (i < \longitud{eventos}) \implica i = \longitud{eventos}$
+\vspace{4pt}
+
+Luego:
+
+\vspace{4pt}
+$res = recurso*(apuestas_c * pagos_c)^{\#(subseq(eventos, 0, i), T)}*(apuestas_s * pagos_s)^{\#(subseq(eventos, 0, i), F)} \land i = \longitud{eventos} \implica res = recurso*(apuestas_c * pagos_c)^{\#(subseq(eventos, 0, \longitud{eventos}), T)}*(apuestas_s * pagos_s)^{\#(subseq(eventos, 0, \longitud{eventos}), F)} \equiv \newline res = recurso*(apuestas_c * pagos_c)^{\#(eventos, T)}*(apuestas_s * pagos_s)^{\#(eventos, F)} \equiv Q_c \,\, \square$
+\vspace{16pt}
+
+Probaremos ahora 2. $\{I \land B\} \, S \, \{I \}$ :
+\vspace{8pt}
+
+Probar esto es equivalente a probar que $I \land B \implica wp(S,I)$, siendo S:
+\begin{equation}
+\label{eq:6}
+    S = S_1 ; S_2 = if (eventos[i]) then (res := res*apuestas_c * pago_c) else (res := res*apuestas_s * pago_s) endif; i := i + 1
+\end{equation}
+Entonces tenemos que:
+\vspace{4pt}
+
+$wp(S, I) \equiv wp(S_1, wp(S_2, I)) \equiv wp(S_1, wp(i := i + 1, I)) \equiv wp(S_1, I^{i}_{i+1}) \equiv def(eventos[i]) \yLuego ((eventos[i] = true \land wp(res := res*apuestas_c * pago_c, I^{i}_{i+1})) \lor (eventos[i] = false \land wp(res := res*apuestas_s * pago_s, I^{i}_{i+1}))) \equiv$
+
+\vspace{16pt}
+
+$ 0 \leq i < \longitud{eventos} \yLuego ((eventos[i] = true \land (I^{i}_{i+1})^{res}_{res*apuestas_c * pago_c}) \lor (eventos[i] = false \land (I^{i}_{i+1})^{res}_{res*apuestas_s * pago_s}))$
+\vspace{16pt}
+
+Para probar que esto es verdadero ($I \land B \implica wp(S,I)$) separaremos en 2 casos: eventos[i] = true y eventos[i] = false.
+\vspace{8pt}
+
+Si eventos[i] = true podemos simplificar el predicado:
+\vspace{8pt}
+
+$ 0 \leq i < \longitud{eventos} \yLuego (eventos[i] = true \land (I^{i}_{i+1})^{res}_{res*apuestas_c * pago_c}) \lor (eventos[i] = false \land (I^{i}_{i+1})^{res}_{res*apuestas_s * pago_s})$
+\vspace{8pt}
+
+$\equiv 0 \leq i < \longitud{eventos} \yLuego (eventos[i] = true \land (I^{i}_{i+1})^{res}_{res*apuestas_c * pago_c}) \equiv 0 \leq i < \longitud{eventos} \yLuego (I^{i}_{i+1})^{res}_{res*apuestas_c * pago_c}$
+\vspace{8pt}
+
+$\equiv  0 \leq i < \longitud{eventos} \yLuego 0 \leq i + 1 \leq \longitud{eventos} \yLuego \newline res*apuestas_c * pago_c = recurso*(apuestas_c * pagos_c)^{\#(subseq(eventos, 0, i + 1), T)}*(apuestas_s * pagos_s)^{\#(subseq(eventos, 0, i + 1), F)}$
+\vspace{8pt}
+
+$\equiv 0 \leq i < \longitud{eventos} \yLuego 0 \leq i + 1 \leq \longitud{eventos} \yLuego 
+\newline res = recurso*(apuestas_c * pagos_c)^{\#(subseq(eventos, 0, i + 1), T) - 1}*(apuestas_s * pagos_s)^{\#(subseq(eventos, 0, i + 1), F)}$
+\vspace{8pt}
+
+$\equiv 0 \leq i < \longitud{eventos} \yLuego 0 \leq i + 1 \leq \longitud{eventos} \yLuego 
+\newline res = recurso*(apuestas_c * pagos_c)^{\#(subseq(eventos, 0, i + 1), T) - 1}*(apuestas_s * pagos_s)^{\#(concat(subseq(eventos, 0, i),<eventos[i]>), F)}$
+\vspace{8pt}
+
+$\equiv 0 \leq i < \longitud{eventos} \yLuego 0 \leq i + 1 \leq \longitud{eventos} \yLuego 
+\newline res = recurso*(apuestas_c * pagos_c)^{\#(subseq(eventos, 0, i + 1), T) - 1}*(apuestas_s * pagos_s)^{\#(subseq(eventos, 0, i), F) + if eventos[i] = false then 1 else 0}$
+\vspace{8pt}
+
+$\equiv 0 \leq i < \longitud{eventos} \yLuego 0 \leq i + 1 \leq \longitud{eventos} \yLuego 
+\newline res = recurso*(apuestas_c * pagos_c)^{\#(subseq(eventos, 0, i + 1), T) - 1}*(apuestas_s * pagos_s)^{\#(subseq(eventos, 0, i), F)}$
+\vspace{8pt}
+
+Por hipótesis tenemos que $0 \leq i \leq \longitud{eventos} \land i < \longitud{eventos} \implica 0 \leq i < \longitud{eventos} \implica 0 \leq i + 1 \leq \longitud{eventos}$
+\vspace{8pt}
+
+También tenemos que $res = recurso*(apuestas_c * pagos_c)^{\#(subseq(eventos, 0, i), T)}*(apuestas_s * pagos_s)^{\#(subseq(eventos, 0, i), F)}$
+\vspace{8pt}
+
+$\equiv res = recurso*(apuestas_c * pagos_c)^{\#(subseq(eventos, 0, i), T) + 1 - 1}*(apuestas_s * pagos_s)^{\#(subseq(eventos, 0, i), F)}$
+\vspace{8pt}
+
+$\equiv res = recurso*(apuestas_c * pagos_c)^{\#(subseq(eventos, 0, i), T) + (if (true) then 1 else 0 fi) - 1}*(apuestas_s * pagos_s)^{\#(subseq(eventos, 0, i), F)}$
+\vspace{8pt}
+
+Y como asumimos $eventos[i] = true:$
+\vspace{8pt}
+
+$\equiv res = recurso*(apuestas_c * pagos_c)^{\#(subseq(eventos, 0, i), T) + (if (eventos[i]) then 1 else 0 fi) - 1}*(apuestas_s * pagos_s)^{\#(subseq(eventos, 0, i), F)}$
+\vspace{8pt}
+
+$\equiv res = recurso*(apuestas_c * pagos_c)^{\#(subseq(eventos, 0, i + 1), T) - 1}*(apuestas_s * pagos_s)^{\#(subseq(eventos, 0, i), F)}$
+\vspace{8pt}
+
+Finalmente podemos concluir que $I \land B \implica wp(S,I)$ para el caso en que $eventos[i] = true$
+\vspace{8pt}
+
+Veamos ahora el caso en el que $eventos[i] = false$ y podemos simplificar el predicado:
+\vspace{8pt}
+
+$ 0 \leq i < \longitud{eventos} \yLuego (eventos[i] = true \land (I^{i}_{i+1})^{res}_{res*apuestas_c * pago_c}) \lor (eventos[i] = false \land (I^{i}_{i+1})^{res}_{res*apuestas_s * pago_s})$
+\vspace{8pt}
+
+$\equiv 0 \leq i < \longitud{eventos} \yLuego (eventos[i] = false \land (I^{i}_{i+1})^{res}_{res*apuestas_s * pago_s}) \equiv 0 \leq i < \longitud{eventos} \yLuego (I^{i}_{i+1})^{res}_{res*apuestas_s * pago_s}$
+\vspace{8pt}
+
+$\equiv 0 \leq i < \longitud{eventos} \yLuego 0 \leq i + 1 \leq \longitud{eventos} \yLuego \newline res*apuestas_s * pago_s = recurso*(apuestas_c * pagos_c)^{\#(subseq(eventos, 0, i + 1), T)}*(apuestas_s * pagos_s)^{\#(subseq(eventos, 0, i + 1), F)}$
+\vspace{8pt}
+
+$\equiv 0 \leq i < \longitud{eventos} \yLuego 0 \leq i + 1 \leq \longitud{eventos} \yLuego 
+\newline res = recurso*(apuestas_c * pagos_c)^{\#(subseq(eventos, 0, i + 1), T)}*(apuestas_s * pagos_s)^{\#(subseq(eventos, 0, i + 1), F) - 1}$
+\vspace{8pt}
+
+$\equiv 0 \leq i < \longitud{eventos} \yLuego 0 \leq i + 1 \leq \longitud{eventos} \yLuego 
+\newline res = recurso*(apuestas_c * pagos_c)^{\#(concat(subseq(eventos, 0,i)),<eventos[i]>), T)}*(apuestas_s * pagos_s)^{\#(subseq(eventos, 0, i + 1), F) - 1}$
+\vspace{8pt}
+
+$\equiv 0 \leq i < \longitud{eventos} \yLuego 0 \leq i + 1 \leq \longitud{eventos} \yLuego 
+\newline res = recurso*(apuestas_c * pagos_c)^{\#(subseq(eventos, 0,i), T) + if eventos[i] = true then 1 else 0}*(apuestas_s * pagos_s)^{\#(subseq(eventos, 0, i + 1), F) - 1}$
+\vspace{8pt}
+
+$\equiv 0 \leq i < \longitud{eventos} \yLuego 0 \leq i + 1 \leq \longitud{eventos} \yLuego 
+\newline res = recurso*(apuestas_c * pagos_c)^{\#(subseq(eventos, 0,i), T)}*(apuestas_s * pagos_s)^{\#(subseq(eventos, 0, i + 1), F) - 1}$
+\vspace{8pt}
+
+Nuevamente por hipótesis tenemos que $0 \leq i \leq \longitud{eventos} \land i < \longitud{eventos} \implica 0 \leq i < \longitud{eventos} \implica 0 \leq i + 1 \leq \longitud{eventos}$
+\vspace{8pt}
+
+Y $res = recurso*(apuestas_c * pagos_c)^{\#(subseq(eventos, 0, i), T)}*(apuestas_s * pagos_s)^{\#(subseq(eventos, 0, i), F)}$
+\vspace{8pt}
+
+$\equiv res = recurso*(apuestas_c * pagos_c)^{\#(subseq(eventos, 0, i), T)}*(apuestas_s * pagos_s)^{\#(subseq(eventos, 0, i), F) + 1 - 1}$
+\vspace{8pt}
+
+$\equiv res = recurso*(apuestas_c * pagos_c)^{\#(subseq(eventos, 0, i), T)}*(apuestas_s * pagos_s)^{\#(subseq(eventos, 0, i), F) + (if(true) then 0 else 1) - 1}$
+\vspace{8pt}
+
+Y como estamos asumiendo que $eventos[i] = false:$
+\vspace{8pt}
+
+$\equiv res = recurso*(apuestas_c * pagos_c)^{\#(subseq(eventos, 0, i), T)}*(apuestas_s * pagos_s)^{\#(subseq(eventos, 0, i), F) + (if(eventos[i]) then 0 else 1) - 1}$
+\vspace{8pt}
+
+$\equiv res = recurso*(apuestas_c * pagos_c)^{\#(subseq(eventos, 0, i), T)}*(apuestas_s * pagos_s)^{\#(subseq(eventos, 0, i + 1), F) - 1}$
+\vspace{8pt}
+
+Por lo tanto concluimos que $I \land B \implica wp(S,I)$ también para el caso en que $eventos[i] = false$
+\vspace{8pt}
+
+Con lo cual hemos demostrado que la tripla de Hoare $\{I \land B\} S \{I \}$ es correcta. $\square$
+\vspace{16pt}
+
+Para demostrar las dos condiciones del Teorema de terminación definiremos primero a la función:
+\begin{equation}
+    fv = \longitud{eventos} - i
+\end{equation}
+\vspace{8pt}
+
+Demostraremos entonces 4. $\{I \land B \land v_0 = fv\} S \{fv < v_0\}$
+\vspace{4pt}
+
+Para ello probaremos que $I \land B \land v_0 = fv \implica wp(S, fv < v_0)$ Siendo S la misma que en la ecuación (\ref{eq:6}).
+\vspace{8pt}
+
+Entonces tenemos que:
+\vspace{8pt}
+
+$wp(S, fv < v_0) \equiv wp(S_1, wp(S_2, fv < v_0)) \equiv wp(S_1, wp(i := i + 1, \longitud{eventos} - i < v_0)) \equiv wp(S_1, \longitud{eventos} - (i+1) < v_0) \equiv def(eventos[i]) \yLuego ((eventos[i] = true \land wp(res := res*apuestas_c * pago_c, \longitud{eventos} - i - 1 < v_0)) \lor (eventos[i] = false \land wp(res := res*apuestas_s * pago_s,\longitud{eventos} - i - 1 < v_0))) \equiv$
+\vspace{8pt}
+
+$ 0 \leq i < \longitud{eventos} \yLuego ((eventos[i] = true \land (\longitud{eventos} - i - 1 < v_0)) \lor (eventos[i] = false \land (\longitud{eventos} - i - 1 < v_0)) \equiv$
+\vspace{16pt}
+
+$ 0 \leq i < \longitud{eventos} \yLuego (\longitud{eventos} - i - 1 < v_0)$
+\vspace{16pt}
+
+Veamos entonces que $I \land B \land v_0 = fv \implica 0 \leq i < \longitud{eventos} \yLuego (\longitud{eventos} - i - 1 < v_0)$
+\vspace{8pt}
+
+Por hipótesis tenemos que $0 \leq i \leq \longitud{eventos} \land i < \longitud{eventos} \implica 0 \leq i < \longitud{eventos}$
+\vspace{8pt}
+
+Y también tenemos que $v_0 = fv \implica \longitud{eventos} - i - 1 < \longitud{eventos} - i$
+\vspace{8pt}
+
+Lo cual es trivialmente cierto. $\square$
+\vspace{16pt}
+
+Finalmente probaremos 5. $I \land fv \leq 0 \implica \lnot B$
+\vspace{8pt}
+
+Pero $\longitud{eventos} - i \leq 0 \equiv \longitud{eventos} \leq i \equiv \neg B$ \,\, $\square$
+
+\vspace{\baselineskip}
+
+De esta manera, como probamos los 5 puntos queda demostrado por el teorema de corrección de ciclos que: 
+
+\begin{equation}
+    P_c \xrightarrow{} wp(s3,Q) 
+\end{equation}
+
+\vspace{\baselineskip}
+Ahora solo nos queda probar que ${P \xrightarrow{} wp(s1;s2,P_c)}$. Para eso primero calculamos $wp(s1;s2,P_c)$ : 
+
+\vspace{8pt}
+
+$wp(s1;s2,P_c)$ \equiv \ $wp(s1,wp(s2,P_c))$ \ \equiv \ $wp(res := recurso,wp(i := 0, res = recurso \land \ i = 0 \land pago_c > 0 \land pago_s > 0 \land apuestas_c > 0 \land apuestas_s > 0 \land recurso > 0))$ \equiv \ $wp(res := recurso,(res = recurso \land \ 0 = 0 \land pago_c > 0 \land pago_s > 0 \land apuestas_c > 0 \land apuestas_s > 0 \land recurso > 0))$ \equiv \ $recurso = recurso \land  pago_c > 0 \land pago_s > 0 \land apuestas_c > 0 \land apuestas_s > 0 \land recurso > 0$ \equiv \ $pago_c > 0 \land pago_s > 0 \land apuestas_c > 0 \land apuestas_s > 0 \land recurso > 0$
+
+\vspace{\baselineskip}
+Luego, es trivialmente cierto que: \\
+$P$ \equiv  \ $apuesta_c$ + $apuesta_s$ = 1 \land \ $pago_c$ \textgreater \ 0 \land $pago_s$ \textgreater \ 0 \land $apuesta_c$ \textgreater \ 0 \land $apuesta_s$ \textgreater \ 0 \land recurso > 0 \rightarrow \\ $pago_c > 0 \land pago_s > 0 \land apuesta_c > 0 \land apuesta_s > 0 \land recurso > 0$ \equiv \ $wp(s1;s2,P_c)$ \ \square
+
+\vspace{\baselineskip}
+Finalmente hemos demostrado que: 
+\begin{equation}
+\begin{split}
+    P \xrightarrow{} wp(s1;s2,P_c) \\
+    P_c \xrightarrow{} wp(s3,Q) 
+\end{split}
+\end{equation}
+y por lo tanto podemos concluir que la tripla $\{P\} s1;s2;s3 \{Q\}$ es válida.  
+
+
+\end{document}
